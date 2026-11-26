@@ -1,0 +1,454 @@
+{
+  "identifier": "smarfle",
+  "name": "Smarfle",
+  "version": "1.0.0",
+  "author": "Smarfle",
+  "authorUrl": "https://www.smarfle.com",
+  "homepage": "https://www.smarfle.com/docs/claude",
+  "cloudEndpoint": "https://www.smarfle.com/api/mcp",
+  "category": "productivity",
+  "icon": "https://www.smarfle.com/icon-512x512.png",
+  "description": "Field service CRM for home service businesses: ask about today's jobs, customers and unpaid invoices, add customers and notes, and send job requests.",
+  "tags": [
+    "crm",
+    "field-service",
+    "home-services",
+    "scheduling",
+    "invoices",
+    "small-business"
+  ],
+  "tools": [
+    {
+      "name": "get_business",
+      "description": "The connected Smarfle business: its name, time zone and today's date in that time zone.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_jobs",
+      "description": "Jobs (visits, appointments) of the business, newest first. Filter by a day or a date range (the business's local dates), status or customer.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+            "description": "One day, YYYY-MM-DD (sets scheduled_from and scheduled_to)."
+          },
+          "scheduled_from": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+            "description": "YYYY-MM-DD"
+          },
+          "scheduled_to": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+            "description": "YYYY-MM-DD"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "requested",
+              "scheduled",
+              "in_progress",
+              "completed",
+              "invoiced",
+              "canceled"
+            ]
+          },
+          "customer_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 50,
+            "default": 20,
+            "description": "How many to return (1-50)."
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_job",
+      "description": "One job with its customer, service, schedule, address, status and price.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "job_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "job_id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "find_customers",
+      "description": "Search the business's customers by name, email, phone or company (q), or match an exact email or phone. Newest first.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "q": {
+            "type": "string",
+            "maxLength": 60,
+            "description": "Part of a name, email, phone or company."
+          },
+          "email": {
+            "type": "string",
+            "maxLength": 254
+          },
+          "phone": {
+            "type": "string",
+            "maxLength": 30
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "lead",
+              "active",
+              "inactive",
+              "archived"
+            ]
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 50,
+            "default": 20,
+            "description": "How many to return (1-50)."
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_customer",
+      "description": "One customer with contact details, address, status and tags.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "customer_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "customer_id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_invoices",
+      "description": "Invoices of the business, newest first. Filter by status (e.g. sent or overdue for unpaid), customer or job.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "sent",
+              "overdue",
+              "paid"
+            ],
+            "description": "sent or overdue = unpaid"
+          },
+          "customer_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "job_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 50,
+            "default": 20,
+            "description": "How many to return (1-50)."
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_invoice",
+      "description": "One invoice with its line items, totals, due date and payment status.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "invoice_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "invoice_id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_services",
+      "description": "The services the business offers, with prices.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "active": {
+            "type": "boolean",
+            "description": "Only active services (default all)."
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "create_customer",
+      "description": "Add a customer (or lead) to the business. Refused with the existing customer's id when the email is already used.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "first_name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "last_name": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "company_name": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "email": {
+            "type": "string",
+            "maxLength": 254
+          },
+          "phone": {
+            "type": "string",
+            "maxLength": 30
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "lead",
+              "active",
+              "inactive"
+            ]
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 5000
+          },
+          "address_street": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "address_unit": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "address_city": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "address_state": {
+            "type": "string",
+            "maxLength": 50,
+            "description": "Two-letter state, e.g. FL"
+          },
+          "address_zip": {
+            "type": "string",
+            "maxLength": 20
+          }
+        },
+        "required": [
+          "first_name"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "update_customer",
+      "description": "Change a customer's contact details, address, status or notes. Only the fields given change.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "customer_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "first_name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "last_name": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "company_name": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "email": {
+            "type": "string",
+            "maxLength": 254
+          },
+          "phone": {
+            "type": "string",
+            "maxLength": 30
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "lead",
+              "active",
+              "inactive",
+              "archived"
+            ]
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 5000
+          },
+          "address_street": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "address_unit": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "address_city": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "address_state": {
+            "type": "string",
+            "maxLength": 50,
+            "description": "Two-letter state, e.g. FL"
+          },
+          "address_zip": {
+            "type": "string",
+            "maxLength": 20
+          }
+        },
+        "required": [
+          "customer_id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "request_job",
+      "description": "Create a job request for a customer (status 'requested', like an online booking). The office confirms and schedules it in Smarfle; nothing is sent to the customer.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "customer_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 5000
+          },
+          "service_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "preferred_date": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+            "description": "YYYY-MM-DD"
+          },
+          "preferred_time": {
+            "type": "string",
+            "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+            "description": "HH:MM, 24-hour"
+          },
+          "address_street": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "address_unit": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "address_city": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "address_state": {
+            "type": "string",
+            "maxLength": 50,
+            "description": "Two-letter state, e.g. FL"
+          },
+          "address_zip": {
+            "type": "string",
+            "maxLength": 20
+          }
+        },
+        "required": [
+          "customer_id",
+          "title"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "add_note",
+      "description": "Add a private note to a customer or a job (only the business's team sees it).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "entity": {
+            "type": "string",
+            "enum": [
+              "customer",
+              "job"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "note": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 5000
+          }
+        },
+        "required": [
+          "entity",
+          "id",
+          "note"
+        ],
+        "additionalProperties": false
+      }
+    }
+  ]
+}
